@@ -69,7 +69,7 @@ services:
     ports:
       - '5432:5432'
     volumes:
-      - dataUser:/var/lib/postgresql/data
+      - user:/var/lib/postgresql/data
     restart: always
 
   postgresProfile:
@@ -82,9 +82,9 @@ services:
     ports:
       - '5432:5432'
     volumes:
-      - dataUser:/var/lib/postgresql/data
+      - profile:/var/lib/postgresql/data
     restart: always
 
 volumes:
-  dataUser:
-  dataProf:
+  user:
+  profile:
