@@ -26,7 +26,7 @@ import { JwtModule } from '@nestjs/jwt';
       useFactory: (configService: ConfigService) => ({
         type: 'postgres' as 'postgres',
         host: configService.get('DATABASE_HOST'),
-        port: parseInt(configService.get<string>('POSTGRES_PORT')),
+        port: parseInt(configService.get<string>('POSTGRES_USER_PORT')),
         username: configService.get<string>('POSTGRES_USER'),
         password: configService.get<string>('POSTGRES_PASSWORD'),
         database: configService.get<string>('POSTGRES_USER_DB'),

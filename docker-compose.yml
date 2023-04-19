@@ -14,21 +14,25 @@ services:
       - 15672:15672
     restart: always
 
-  profile:
+  microservice-app:
+    container_name: microservice-app
     build:
       context: ./
-      dockerfile: ./apps/user/Dockerfile
+      dockerfile: ./apps/microservice-app/Dockerfile
+    ports:
+      - '5000:5000'
     env_file:
       - .env
     depends_on:
       - rabbitmq
-      - postgresProfile
+      - user
     volumes:
       - .:/usr/src/app
       - /usr/src/app/node_modules
-    command: npm run start:dev user
+    command: npm run start:dev microservice-app
 
   user:
+    container_name: user-app
     build:
       context: ./
       dockerfile: ./apps/user/Dockerfile
@@ -38,31 +42,29 @@ services:
       - rabbitmq
       - postgresUser
     volumes:
-      - .:/usr/src/app
-      - /usr/src/app/node_modules
+      - dataProf:/var/lib/postgresql/data
     command: npm run start:dev user
 
-  microserviceApp:
+  profile:
+    container_name: profile-app
     build:
       context: ./
-      dockerfile: ./apps/microservice-app/Dockerfile
-    ports:
-      - '3000:5000'
+      dockerfile: ./apps/profile/Dockerfile
     env_file:
       - .env
     depends_on:
       - rabbitmq
+      - postgresProfile
     volumes:
-      - .:/usr/src/app
-      - /usr/src/app/node_modules
-    command: npm run start:dev microservice-app
+      - dataProf:/var/lib/postgresql/data
+    command: npm run start:dev profile
 
   postgresUser:
     container_name: postgresUser
     image: postgres:latest
     environment:
       POSTGRES_DB: 'user'
-      POSTGRES_PASSWORD: '2002rr'
+      POSTGRES_PASSWORD: '12345'
       PG_DATA: /var/lib/postgresql/data
     ports:
       - '5432:5432'
@@ -75,10 +77,14 @@ services:
     image: postgres:latest
     environment:
       POSTGRES_DB: 'profile'
-      POSTGRES_PASSWORD: '2002rr'
+      POSTGRES_PASSWORD: '12345'
       PG_DATA: /var/lib/postgresql/data
     ports:
       - '5432:5432'
     volumes:
       - dataUser:/var/lib/postgresql/data
     restart: always
+
+volumes:
+  dataUser:
+  dataProf:
