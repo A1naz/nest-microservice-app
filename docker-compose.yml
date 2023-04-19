@@ -14,59 +14,71 @@ services:
       - 15672:15672
     restart: always
 
-#   gateway:
-#     container_name: gateway
-#     build:
-#       context: .apps/gateway
-#     ports:
-#       - 3000:3000
-#     command: npm run start:dev
-#     depends_on:
-#       - rabbitmq
-#     restart: always
+  profile:
+    build:
+      context: ./
+      dockerfile: ./apps/user/Dockerfile
+    env_file:
+      - .env
+    depends_on:
+      - rabbitmq
+      - postgresProfile
+    volumes:
+      - .:/usr/src/app
+      - /usr/src/app/node_modules
+    command: npm run start:dev user
 
-#   profile:
-#     container_name: app-profile
-#     build:
-#       context: ./profile
-#     command: npm run start:dev
-#     depends_on:
-#       - postgresProfile
-#       - rabbitmq
-#     restart: always
+  user:
+    build:
+      context: ./
+      dockerfile: ./apps/user/Dockerfile
+    env_file:
+      - .env
+    depends_on:
+      - rabbitmq
+      - postgresUser
+    volumes:
+      - .:/usr/src/app
+      - /usr/src/app/node_modules
+    command: npm run start:dev user
 
-#   user:
-#     container_name: app-user
-#     build:
-#       context: ./user
-#     command: npm run start:dev
-#     depends_on:
-#       - postgresUser
-#       - rabbitmq
-#     restart: always
+  microserviceApp:
+    build:
+      context: ./
+      dockerfile: ./apps/microservice-app/Dockerfile
+    ports:
+      - '3000:5000'
+    env_file:
+      - .env
+    depends_on:
+      - rabbitmq
+    volumes:
+      - .:/usr/src/app
+      - /usr/src/app/node_modules
+    command: npm run start:dev microservice-app
 
-#   postgresUser:
-#     container_name: postgresUser
-#     image: postgres:latest
-#     environment:
-#       POSTGRES_DB: 'user'
-#       POSTGRES_PASSWORD: qwerty
-#       PG_DATA: /var/lib/postgresql/data
-#     volumes:
-#       - dataUser:/var/lib/postgresql/data
-#     restart: always
+  postgresUser:
+    container_name: postgresUser
+    image: postgres:latest
+    environment:
+      POSTGRES_DB: 'user'
+      POSTGRES_PASSWORD: '2002rr'
+      PG_DATA: /var/lib/postgresql/data
+    ports:
+      - '5432:5432'
+    volumes:
+      - dataUser:/var/lib/postgresql/data
+    restart: always
 
-#   postgresProfile:
-#     container_name: postgresProfile
-#     image: postgres:latest
-#     environment:
-#       POSTGRES_DB: 'profile'
-#       POSTGRES_PASSWORD: qwerty
-#       PG_DATA: /var/lib/postgresql/data
-#     volumes:
-#       - dataProf:/var/lib/postgresql/data
-#     restart: always
-
-# volumes:
-#   dataUser:
-#   dataProf:
+  postgresProfile:
+    container_name: postgresProfile
+    image: postgres:latest
+    environment:
+      POSTGRES_DB: 'profile'
+      POSTGRES_PASSWORD: '2002rr'
+      PG_DATA: /var/lib/postgresql/data
+    ports:
+      - '5432:5432'
+    volumes:
+      - dataUser:/var/lib/postgresql/data
+    restart: always

@@ -1,22 +1,48 @@
 import { Controller, Get } from '@nestjs/common';
 import { UserService } from './user.service';
-import { MessagePattern, Ctx, RmqContext } from '@nestjs/microservices';
+import {
+  MessagePattern,
+  Ctx,
+  RmqContext,
+  Payload,
+} from '@nestjs/microservices';
+import { userDto } from '../dto/user.dto';
+import { oneUserDto } from '../dto/one-user.dto';
 
 @Controller()
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
-  @Get()
-  getHello(): string {
-    return this.userService.getHello();
+
+  @MessagePattern({cmd: 'login'})
+  login(@Payload() data: userDto, @Ctx() context: RmqContext) {
+    return this.userService.login(data.login, data.password);
   }
 
   @MessagePattern({ cmd: 'get-user' })
   async getUser(@Ctx() context: RmqContext) {
-    const channel = context.getChannelRef();
-    const message = context.getMessage();
-    channel.ack(message);
+    const users = await this.userService.getUsers();
+    return users;
+  }
 
-    return { user: 'USER' };
+  @MessagePattern({ cmd: 'get-one-user' })
+  async getOneUser(@Payload() data: oneUserDto, @Ctx() context: RmqContext) {
+    const users = await this.userService.getOneUser(data);
+    return users;
+  }
+
+  @MessagePattern({ cmd: 'create-user' })
+  async createUser(@Payload() data: userDto, @Ctx() context: RmqContext) {
+    return await this.userService.createUser(data);
+  }
+
+  @MessagePattern({ cmd: 'update-user' })
+  async updateUser(@Payload() data: userDto, @Ctx() context: RmqContext) {
+    return await this.userService.updateUser(data);
+  }
+
+  @MessagePattern({ cmd: 'delete-user' })
+  async deleteUser(@Payload() data: oneUserDto, @Ctx() context: RmqContext) {
+    return await this.userService.deleteUser(data);
   }
 }

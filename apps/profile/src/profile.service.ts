@@ -1,8 +1,97 @@
-import { Injectable } from '@nestjs/common';
+import {
+  Injectable,
+  HttpException,
+  HttpStatus,
+  ConflictException,
+} from '@nestjs/common';
+import { profileDto } from '../dto/profile.dto';
+import { newProfileDto } from '../dto/new-profile.dto';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Profile } from '../entities/profile.entity';
+import { Repository } from 'typeorm';
+import { oneProfileDto } from '../dto/one-profile.dto';
+
+import * as bcrypt from 'bcryptjs';
 
 @Injectable()
 export class ProfileService {
-  getHello(): string {
-    return 'Hello World!';
+  constructor(
+    @InjectRepository(Profile)
+    private ProfileRepository: Repository<Profile>
+  ) {}
+
+  async getOneProfile(data: oneProfileDto) {
+    try {
+      const Profile = await this.ProfileRepository.findOne({
+        where: { idUser: data.idUser },
+      });
+
+      if (!Profile) {
+        return new ConflictException(
+          `Пользователя с id: ${data.idUser} не существует`
+        ).message;
+      }
+
+      return Profile;
+    } catch (err) {
+      const result = new ConflictException(
+        `Пользователя с id: ${data.idUser} не существует`,
+        err
+      );
+      return result.message;
+    }
+  }
+
+  async getProfiles() {
+    const Profiles = await this.ProfileRepository.find();
+    return Profiles;
+  }
+
+  async createProfile(Profile: newProfileDto) {
+    const id = Profile.idUser;
+    const isProfileExist = await this.ProfileRepository.findOne({
+      where: { idUser: id },
+    });
+
+    if (isProfileExist) {
+      const result = new ConflictException('Логин уже занят');
+      return result.message;
+    }
+    const newProfile = await this.ProfileRepository.save(Profile);
+    return { ProfileId: newProfile.idProfile };
+  }
+
+  async updateProfile(Profile: profileDto) {
+    try {
+      const id = Profile.idProfile;
+      console.log(id);
+      const isProfileExist = await this.ProfileRepository.findOne({
+        where: { idProfile: id },
+      });
+      await this.ProfileRepository.save({ ...isProfileExist, ...Profile });
+      return 'Пользователь изменен!';
+    } catch (e) {
+      const result = new ConflictException('Неверные данные');
+      return result.message;
+    }
+  }
+
+  async deleteProfile(data: oneProfileDto) {
+    try {
+      console.log(data);
+
+      const Profile = await this.ProfileRepository.findOne({
+        where: { idProfile: data.idUser },
+      });
+      await this.ProfileRepository.remove(Profile);
+
+      return `Пользователь с id: ${data.idUser} удален`;
+    } catch (error) {
+      const result = new ConflictException(
+        `Пользователя с id: ${data.idUser} не существует`,
+        error
+      );
+      return result.message;
+    }
   }
 }
